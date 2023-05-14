@@ -1,0 +1,14 @@
+{
+  "name": "echo-service",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "mocha ./src/app.spec.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chai": "^4.3.7"
+  }
+}
