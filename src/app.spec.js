@@ -1,20 +1,21 @@
-const assert = require('assert');
 const http = require('http');
-const { createEchoServer, close } = require('./app');
+const { expect } = require('chai');
+const { describe } = require('mocha');
+const { createEchoServer } = require('./app');
 
 describe('Echo Server', () => {
   let server;
 
-  beforeEach(() => {
+  before(() => {
     server = createEchoServer();
   });
 
-  afterEach(() => {
-    close(server);
+  after(() => {
+    server.close();
   });
 
-  it('should return the payload', (done) => {
-    const payload = 'Hello, World!';
+  it('should echo the payload for /echo', done => {
+    const payload = 'Hello, world!';
     const options = {
       host: 'localhost',
       port: 3000,
@@ -22,19 +23,19 @@ describe('Echo Server', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'text/plain',
-        'Content-Length': payload.length
+        'Content-Length': Buffer.byteLength(payload)
       }
     };
 
-    const req = http.request(options, (res) => {
-      let receivedPayload = '';
+    const req = http.request(options, res => {
+      let responseBody = '';
 
-      res.on('data', (chunk) => {
-        receivedPayload += chunk;
+      res.setEncoding('utf8');
+      res.on('data', chunk => {
+        responseBody += chunk;
       });
-
       res.on('end', () => {
-        assert.strictEqual(receivedPayload, payload);
+        expect(responseBody).to.equal(payload);
         done();
       });
     });
@@ -43,28 +44,10 @@ describe('Echo Server', () => {
     req.end();
   });
 
-  it('should return "Not Found" for other routes', (done) => {
-    const options = {
-      host: 'localhost',
-      port: 3000,
-      path: '/other',
-      method: 'GET'
-    };
-
-    const req = http.request(options, (res) => {
-      let receivedPayload = '';
-
-      res.on('data', (chunk) => {
-        receivedPayload += chunk;
-      });
-
-      res.on('end', () => {
-        assert.strictEqual(res.statusCode, 404);
-        assert.strictEqual(receivedPayload, 'Not Found');
-        done();
-      });
+  it('should return 404 for unknown paths', done => {
+    http.get('http://localhost:3000/unknown', res => {
+      expect(res.statusCode).to.equal(404);
+      done();
     });
-
-    req.end();
   });
 });

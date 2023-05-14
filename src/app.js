@@ -4,21 +4,23 @@ function createEchoServer() {
   const server = http.createServer((req, res) => {
     if (req.url === '/echo') {
       let payload = '';
+
       req.on('data', chunk => {
         payload += chunk;
       });
+
       req.on('end', () => {
-        res.setHeader('Content-Type', 'text/plain');
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end(payload);
       });
     } else {
-      res.statusCode = 404;
-      res.end('Not Found');
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('404 Not Found');
     }
   });
 
   server.listen(3000, () => {
-    console.log('Echo server listening on port 3000');
+    console.log('Echo server is listening on port 3000');
   });
 
   return server;
@@ -26,17 +28,17 @@ function createEchoServer() {
 
 function close(server) {
   server.close(() => {
-    console.log('Echo server closed');
+    console.log('Echo server has been closed');
   });
 }
 
-if (require.main === module) {
-  const echoServer = createEchoServer();
-
-  // Close the server after 10 seconds for testing purposes
-  setTimeout(() => {
-    close(echoServer);
-  }, 10000);
-}
-
 module.exports = { createEchoServer, close };
+
+if (require.main === module) {
+  const server = createEchoServer();
+
+  // Gracefully close the server on SIGINT (Ctrl+C)
+  process.on('SIGINT', () => {
+    close(server);
+  });
+}
